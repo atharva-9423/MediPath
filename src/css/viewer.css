@@ -1,0 +1,277 @@
+/* ==========================================================================
+   CampusWalk AI - 360 Viewer Styling, Hotspots & Admin Reticle
+   ========================================================================== */
+
+.panorama-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: #000;
+  /* isolation:isolate creates a compositing layer boundary so the
+     motion-blur overlay's backdrop-filter only blurs content inside
+     this container, leaving the Dynamic Island & UI above untouched */
+  isolation: isolate;
+}
+
+/* Pannellum UI Overrides — correct prefix is pnlm- not pnm- */
+.pnlm-container {
+  font-family: var(--font-sans) !important;
+  /* Override grey checkerboard: show solid black until texture renders */
+  background: #000 !important;
+}
+
+/* Hide ALL Pannellum loading UI elements instantly */
+.pnlm-load-box,
+.pnlm-loading,
+.pnlm-load-button,
+.pnlm-controls-container,
+.pnlm-zoom-controls,
+.pnlm-fullscreen-toggle-button,
+.pnlm-orientation-button,
+.pnlm-compass {
+  display: none !important;
+}
+
+.panorama-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  backface-visibility: hidden;
+  will-change: opacity;
+  transition: opacity 0.2s ease-out;
+}
+
+.panorama-canvas.active {
+  opacity: 1;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.panorama-preview-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Destination: instantly visible underneath */
+.panorama-canvas.streetview-target {
+  opacity: 1 !important;
+  z-index: 1 !important;
+  pointer-events: none;
+  transition: none !important;
+}
+
+/* Departure: fade out only */
+.panorama-canvas.streetview-drive,
+.panorama-canvas.active.streetview-drive {
+  opacity: 0 !important;
+  z-index: 2 !important;
+  transition: opacity 0.2s ease-out !important;
+}
+
+/* ============================================================
+   MOTION BLUR OVERLAY
+   A backdrop-filter div that sits above both WebGL canvases (z-index 5)
+   but below all UI. When .blur-active is added it applies a real
+   GPU blur to the rendered panorama pixels during the scene switch,
+   creating a convincing "moving through space" motion blur effect.
+   The WebGL canvas GPU context is NEVER touched — no jank.
+   ============================================================ */
+#motion-blur-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+
+  /* Hidden by default */
+  opacity: 0;
+
+  /* Backdrop blur starts at 0 */
+  backdrop-filter: blur(0px) brightness(1) saturate(1);
+  -webkit-backdrop-filter: blur(0px) brightness(1) saturate(1);
+
+  /* Subtle horizontal speed-streak pattern painted on top of the blur.
+     These are extremely faint lines that accentuate the motion blur feel
+     without being visible when the overlay fades out. */
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.000) 0px,
+    rgba(255, 255, 255, 0.028) 1px,
+    rgba(255, 255, 255, 0.000) 2px,
+    rgba(255, 255, 255, 0.000) 16px
+  );
+
+  /* Smooth fade-in of both opacity AND blur */
+  transition:
+    opacity          0.18s ease-in,
+    backdrop-filter  0.18s ease-in,
+    -webkit-backdrop-filter 0.18s ease-in;
+}
+
+/* Blur peak state — added on hotspot click */
+#motion-blur-overlay.blur-active {
+  opacity: 1;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(0.65);
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(0.65);
+}
+
+/* Fade-out after switch — slightly slower so the new scene eases in gently */
+#motion-blur-overlay.blur-clearing {
+  opacity: 0;
+  backdrop-filter: blur(0px) brightness(1) saturate(1);
+  -webkit-backdrop-filter: blur(0px) brightness(1) saturate(1);
+  transition:
+    opacity          0.22s ease-out,
+    backdrop-filter  0.22s ease-out,
+    -webkit-backdrop-filter 0.22s ease-out;
+}
+
+/* Hide legacy overlay */
+.transition-overlay {
+  display: none !important;
+}
+
+/* Custom Hotspot Animations & Pulsing Target Rings */
+.custom-hotspot {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+}
+
+.hotspot-inner {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(24, 22, 20, 0.92);
+  backdrop-filter: blur(8px);
+  border: 2px solid #f97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.7), 0 0 35px rgba(217, 107, 39, 0.4);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hotspot-inner i {
+  width: 20px;
+  height: 20px;
+  color: #f97316;
+  filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.8));
+}
+
+.hotspot-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  border: 2px solid #f97316;
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
+  animation: hotspot-ring 2s infinite ease-out;
+}
+
+@keyframes hotspot-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* Highlighted Route Hotspot */
+.custom-hotspot.route-active .hotspot-inner {
+  background: linear-gradient(135deg, #f97316, #d96b27);
+  border-color: #fff;
+  box-shadow: 0 0 30px rgba(249, 115, 22, 0.9), 0 0 50px rgba(217, 107, 39, 0.6);
+  animation: bounce-hotspot 1s infinite alternate;
+}
+
+.custom-hotspot.route-active .hotspot-inner i {
+  color: #fff;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+}
+
+@keyframes bounce-hotspot {
+  from { transform: scale(1); }
+  to { transform: scale(1.2); }
+}
+
+/* Hotspot Label Tooltip */
+.hotspot-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.custom-hotspot:hover .hotspot-tooltip,
+.custom-hotspot.route-active .hotspot-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Admin Crosshair Overlay */
+.admin-reticle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 65;
+}
+
+.crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(239, 68, 68, 0.7);
+}
+
+.crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(239, 68, 68, 0.7);
+}
+
+.reticle-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(12px, 12px);
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: bold;
+}

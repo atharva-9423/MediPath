@@ -1,0 +1,188 @@
+/* ==========================================================================
+   CampusWalk AI - Interactive 2D SVG Mini-Map Styling
+   ========================================================================== */
+
+.minimap-container {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 80px);
+  right: 16px;
+  width: 320px;
+  height: 300px;
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.35s var(--transition-normal);
+}
+
+.minimap-container.minimized {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8) translateY(20px);
+}
+
+@media (max-width: 480px) {
+  .minimap-container {
+    width: calc(100vw - 32px);
+    right: 16px;
+    left: 16px;
+    height: 280px;
+  }
+}
+
+.minimap-header {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.minimap-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.floor-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  gap: 2px;
+}
+
+.floor-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+}
+
+.floor-btn.active {
+  background: #ffffff;
+  color: #000000;
+}
+
+.minimap-viewport {
+  flex: 1;
+  position: relative;
+  background: rgba(9, 11, 16, 0.9);
+  overflow: hidden;
+}
+
+.light-theme .minimap-viewport {
+  background: #f1f5f9;
+}
+
+#minimap-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.map-wall {
+  stroke: var(--glass-border-hover);
+  stroke-width: 3;
+  fill: rgba(30, 41, 59, 0.3);
+}
+
+.map-room {
+  fill: rgba(15, 23, 42, 0.7);
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1.5;
+}
+
+.map-room-text {
+  font-size: 11px;
+  font-family: var(--font-sans);
+  fill: var(--text-secondary);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.map-path-line {
+  stroke: var(--accent-primary);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  stroke-dasharray: 8 4;
+  animation: path-dash 1.5s linear infinite;
+}
+
+@keyframes path-dash {
+  to { stroke-dashoffset: -24; }
+}
+
+.map-node-pin {
+  cursor: pointer;
+}
+
+.map-node-pin circle.node-bg {
+  fill: var(--bg-card);
+  stroke: var(--glass-border);
+  stroke-width: 2;
+}
+
+.map-node-pin.active circle.node-bg {
+  fill: #ffffff;
+  stroke: var(--accent-primary);
+  stroke-width: 3;
+}
+
+.map-node-pin.target circle.node-bg {
+  fill: #ef4444;
+  stroke: #fff;
+  stroke-width: 3;
+  animation: pulse-pin 1s infinite alternate;
+}
+
+@keyframes pulse-pin {
+  from { r: 8; }
+  to { r: 12; }
+}
+
+.map-user-cone {
+  fill: rgba(129, 140, 248, 0.3);
+  stroke: var(--accent-primary);
+  stroke-width: 1;
+}
+
+.minimap-legend {
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+
+.legend-dot.current { background: #ffffff; }
+.legend-dot.destination { background: #ef4444; }
+.legend-line.path { width: 14px; height: 3px; background: var(--accent-primary); }

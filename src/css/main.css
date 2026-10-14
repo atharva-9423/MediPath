@@ -1,0 +1,339 @@
+/* ==========================================================================
+   CampusWalk AI — Tactical Technical UI System
+   Strictly aligned with tactical mockup design:
+   Pitch dark HUD · Clean Rounded Corners · Bright blue accent · Off-white sheet
+   ========================================================================== */
+
+/* ── Custom Fonts Registration ──────────────────────────────── */
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vastago Grotesk';
+  src: url('/fonts/VastagoGrotesk-SemiBold.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ── Tactical Theme Tokens ─────────────────────────────────────── */
+  --hud-bg:             #0c0c0e;   /* Pitch Dark HUD Header Surface */
+  --hud-surface:        #141417;   /* Elevated HUD element fill */
+  --sheet-bg:          #f4f4f6;   /* Off-white Tactical Bottom Sheet */
+  --sheet-card:        #ffffff;   /* Sheet card white background */
+  
+  /* ── Accent Colors ─────────────────────────────────────────────── */
+  --accent-blue:        #2563eb;   /* Vibrant Tactical Blue for Mic button */
+  --accent-blue-hover:  #1d4ed8;
+  --accent-red:         #ef4444;   /* Live indicator red dot & active tab bar */
+  --accent-orange:      #ff5500;   /* Open status orange/red */
+  --accent-green:       #10b981;   /* Success green */
+
+  /* ── Borders & Dividers ────────────────────────────────────────── */
+  --hud-border:         #27272a;   /* Dark border for HUD elements */
+  --sheet-border:       #e4e4e7;   /* Light border for sheet elements */
+  --sheet-border-dark:  #18181b;   /* Solid black border for active items */
+
+  /* ── Corner Radii ──────────────────────────────────────────────── */
+  --radius-sm:          8px;
+  --radius-md:          12px;
+  --radius-lg:          18px;
+  --radius-xl:          24px;
+  --radius-pill:        9999px;
+
+  /* ── Text Colors ───────────────────────────────────────────────── */
+  --text-hud-main:      #f4f4f5;   /* Crisp white text in HUD */
+  --text-hud-sub:       #a1a1aa;   /* Muted technical grey in HUD */
+  --text-sheet-main:    #09090b;   /* Sharp dark text on Light Sheet */
+  --text-sheet-sub:     #71717a;   /* Muted text on Light Sheet */
+
+  /* ── Fonts ─────────────────────────────────────────────────────── */
+  --font-heavy:   'Vastago Grotesk', sans-serif;
+  --font-body:    'Vastago Grotesk', sans-serif;
+  --font-heading: 'Vastago Grotesk', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --header-height: 64px;
+  --safe-bottom:   env(safe-area-inset-bottom, 20px);
+}
+
+/* ── Global Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--text-hud-main);
+  background-color: var(--hud-bg);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app.app-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--hud-bg);
+}
+
+/* ── Typography Scale ──────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  text-transform: uppercase;
+}
+
+/* ── Tactical Bracket Utilities ────────────────────────────────── */
+.tactical-bracket-box {
+  position: relative;
+  border: 1px solid var(--hud-border);
+  background: rgba(18, 18, 22, 0.85);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Corner Reticle/Brackets */
+.tactical-bracket-box::before,
+.tactical-bracket-box::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: #a1a1aa;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.tactical-bracket-box::before {
+  top: -1px;
+  left: -1px;
+  border-width: 1px 0 0 1px;
+}
+
+.tactical-bracket-box::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+/* ── Tactical Action Buttons ───────────────────────────────────── */
+button {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* Solid Black Tactical Action Button (NAVIGATE ->) */
+.btn-tactical-black {
+  background: #09090b;
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  gap: 8px;
+  border: 1px solid #09090b;
+}
+
+.btn-tactical-black:hover {
+  background: #27272a;
+}
+
+/* Blue Tactical Mic Button */
+.btn-tactical-blue {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-tactical-blue:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* ── Live Pulse Indicator Dot ──────────────────────────────────── */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--accent-red);
+  letter-spacing: 0.6px;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+  animation: pulse-live 1.5s infinite;
+}
+
+@keyframes pulse-live {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── App-Wide Smooth Animations & Micro-Interactions ──────────── */
+
+/* Smooth Page Fade & Scale Entrance */
+@keyframes pageFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+.home-view-wrapper:not(.hidden),
+.live-2d-map-wrapper:not(.hidden),
+.panorama-page-wrapper:not(.hidden) {
+  animation: pageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth Bottom Sheet Slide Up */
+@keyframes sheetSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tactical-sheet-container:not(.hidden) {
+  animation: sheetSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth Modal Backdrop Overlay Fade In */
+@keyframes overlayFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Smooth Modal Card Spring Pop In */
+@keyframes modalPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-overlay:not(.hidden) {
+  animation: overlayFadeIn 0.25s ease forwards;
+}
+
+.modal-overlay:not(.hidden) .modal-card,
+.voice-overlay:not(.hidden) .voice-card {
+  animation: modalPopIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ── Global Button Active Feedback ────────────────────────── */
+button {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* ── Utilities ────────────────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}

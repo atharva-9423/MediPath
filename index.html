@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MediPath - Medicover Hospital Sangamner | 3D Hospital Navigation</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description"
+    content="Interactive 3D 360° indoor navigation and live hospital map for Medicover Hospital, Sangamner.">
+
+  <!-- Fonts: JetBrains Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Pannellum 360 Viewer CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+
+  <!-- Leaflet 2D Live Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/src/css/main.css">
+  <link rel="stylesheet" href="/src/css/components.css">
+  <link rel="stylesheet" href="/src/css/viewer.css">
+  <link rel="stylesheet" href="/src/css/minimap.css">
+</head>
+
+<body class="dark-theme">
+
+  <!-- Fullscreen Splash Overlay -->
+  <div id="fs-splash" style="
+    position:fixed;inset:0;z-index:99999;
+    background:#0a0a0f;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    cursor:pointer;user-select:none;
+    font-family:'Inter',sans-serif;
+  ">
+    <div style="text-align:center;">
+      <div><img src="/medipath-logo.png" alt="MediPath logo"
+        style="width:120px;height:120px;object-fit:contain;margin-bottom:16px;border-radius:28px;"></div>
+      <div
+        style="font-size:22px;font-weight:700;color:#ff6b00;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">
+        MediPath</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:40px;letter-spacing:1px;">Hospital
+        Navigation</div>
+      <div style="
+        padding:14px 36px;
+        background:#ff6b00;
+        color:#fff;
+        border-radius:50px;
+        font-size:15px;
+        font-weight:600;
+        letter-spacing:1px;
+        text-transform:uppercase;
+        animation:fs-pulse 1.5s ease-in-out infinite;
+      ">Tap to Enter</div>
+    </div>
+  </div>
+  <style>
+    @keyframes fs-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.85
+      }
+    }
+  </style>
+  <script>
+    (function () {
+      var splash = document.getElementById('fs-splash');
+      function enterFS() {
+        var el = document.documentElement;
+        var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if (rfs) { try { rfs.call(el); } catch (e) { } }
+        splash.style.transition = 'opacity 0.4s';
+        splash.style.opacity = '0';
+        setTimeout(function () { splash.style.display = 'none'; }, 400);
+      }
+      splash.addEventListener('click', enterFS, { once: true });
+      splash.addEventListener('touchend', enterFS, { once: true });
+    })();
+  </script>
+
+  <div id="app" class="app-container">
+
+    <!-- Home Page Container (Option 1 in Bottom Dock) -->
+    <div id="home-view-container" class="home-view-wrapper">
+
+      <!-- Top Minimal Header -->
+      <div class="home-header-minimal">
+        <div class="home-brand">
+          <div class="home-brand-row">
+            <img src="/medipath-logo.png" alt="MediPath logo" class="home-logo">
+            <div class="home-brand-text">
+              <span class="home-brand-title">MEDIPATH</span>
+              <span class="home-brand-sub">MEDICOVER SANGAMNER • 3D NAVIGATION</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bento Grid Cards Container -->
+      <div class="home-bento-grid">
+        <!-- Card 1: Main 2D Map (Span 2 Cols) -->
+        <div class="bento-card bento-wide" id="bento-card-map">
+          <div class="bento-card-top">
+            <div class="bento-icon-badge orange"><i data-lucide="map"></i></div>
+            <span class="bento-pill">LIVE TRACKING</span>
+          </div>
+          <div class="bento-card-bottom">
+            <h3 class="bento-title">Interactive 2D Map</h3>
+            <p class="bento-desc">High-precision hospital map & 360° view</p>
+          </div>
+        </div>
+
+        <!-- Card 2: Pathology Lab -->
+        <div class="bento-card" data-goto-node="node_1f_cs_lab">
+          <div class="bento-icon-badge"><i data-lucide="microscope"></i></div>
+          <div class="bento-card-bottom">
+            <h4 class="bento-sm-title">Pathology Lab</h4>
+            <span class="bento-meta">FLOOR 01</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Pharmacy -->
+        <div class="bento-card" data-goto-node="node_gf_library">
+          <div class="bento-icon-badge"><i data-lucide="pill"></i></div>
+          <div class="bento-card-bottom">
+            <h4 class="bento-sm-title">Pharmacy</h4>
+            <span class="bento-meta">GROUND FLOOR</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Operation Theatres -->
+        <div class="bento-card" data-goto-node="node_2f_robotics">
+          <div class="bento-icon-badge"><i data-lucide="activity"></i></div>
+          <div class="bento-card-bottom">
+            <h4 class="bento-sm-title">Operation Theatres</h4>
+            <span class="bento-meta">FLOOR 02</span>
+          </div>
+        </div>
+
+        <!-- Card 5: AI Voice Guide -->
+        <div class="bento-card" id="bento-card-voice">
+          <div class="bento-icon-badge orange"><i data-lucide="sparkles"></i></div>
+          <div class="bento-card-bottom">
+            <h4 class="bento-sm-title">AI Assistant</h4>
+            <span class="bento-meta">VOICE SEARCH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Search Input Field (Clean Minimal Floating Box above Dock) -->
+      <div class="home-bottom-search-wrapper">
+        <div class="home-search-box">
+          <i data-lucide="search" class="search-box-icon"></i>
+          <input type="text" id="home-search-input" class="home-search-field"
+            placeholder="Search wards, labs, pharmacy, doctors..." autocomplete="off">
+          <button id="btn-home-mic" class="home-search-mic" title="Voice Search" aria-label="Voice Search">
+            <i data-lucide="mic"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dedicated Full-Screen Search Page Container (Option 2 in Bottom Navigation) -->
+    <div id="search-view-container" class="search-view-wrapper hidden">
+      <!-- Search Page Top Header & Search Controls -->
+      <div class="search-page-header">
+        <div class="search-page-title-row">
+          <h2 class="search-page-heading">Search Locations</h2>
+        </div>
+
+        <!-- Prominent Search Input Bar -->
+        <div class="search-page-input-wrapper">
+          <i data-lucide="search" class="search-input-icon"></i>
+          <input type="text" id="dedicated-search-input" class="search-page-input"
+            placeholder="Search by ward, lab, department, or floor..." autocomplete="off">
+          <button id="btn-clear-search" class="search-action-icon-btn hidden" title="Clear Search">
+            <i data-lucide="x"></i>
+          </button>
+          <button id="btn-page-search-mic" class="search-action-icon-btn mic-accent" title="Voice Search">
+            <i data-lucide="mic"></i>
+          </button>
+        </div>
+
+        <!-- Category Pills Filter Carousel (Only 4 Filter Pills) -->
+        <div class="search-category-pills" id="search-category-pills">
+          <button class="search-pill-chip active" data-category="all">
+            <i data-lucide="grid"></i> All Places
+          </button>
+          <button class="search-pill-chip" data-category="1F">
+            <i data-lucide="layers"></i> Floor 1
+          </button>
+          <button class="search-pill-chip" data-category="2F">
+            <i data-lucide="layers"></i> Floor 2
+          </button>
+          <button class="search-pill-chip" data-category="3F">
+            <i data-lucide="layers"></i> Floor 3
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Assistant Reasoning Card (Shown when AI query is active) -->
+      <div id="search-page-ai-box" class="search-page-ai-box hidden">
+        <div class="ai-box-badge"><i data-lucide="sparkles"></i> AI QUERY INTERPRETATION</div>
+        <p id="search-page-ai-text" class="ai-box-text">Understanding query...</p>
+      </div>
+
+      <!-- Well-Organized Search Results Section -->
+      <div class="search-results-container">
+        <!-- Structured Group / Cards Container -->
+        <div id="dedicated-search-results-list" class="dedicated-search-results-grid"></div>
+
+        <!-- Clean Empty State -->
+        <div id="search-empty-state" class="search-empty-state hidden">
+          <div class="empty-state-icon"><i data-lucide="search-x"></i></div>
+          <h4 class="empty-state-title">No Locations Found</h4>
+          <p class="empty-state-desc">We couldn't find any hospital places matching your query. Try searching for "Pharmacy", "OPD", "ICU", or "Pathology Lab".</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Search Bar & Controls (Visible on 2D Map Page) -->
+    <div class="floating-hud-controls hidden" id="hud-controls-group">
+      <!-- Framed Search Box with Corner Reticles/Brackets -->
+      <div class="hud-search-container tactical-bracket-box" id="explore-search-bar">
+          <input type="text" id="ai-search-input" class="hud-search-input"
+          placeholder="Where to — Pharmacy, OPD, ICU..." autocomplete="off">
+        <button id="btn-voice-search" class="hud-mic-btn" title="Voice Search" aria-label="Voice Search">
+          <i data-lucide="mic"></i>
+        </button>
+      </div>
+
+      <!-- Floating Controls: Locate Me (Aim button) -->
+      <div class="hud-floating-controls">
+        <button id="btn-locate-me" class="hud-compass-btn tactical-bracket-box" title="Locate Me"
+          aria-label="Locate Me">
+          <i data-lucide="crosshair"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3D Panorama View Full-Screen Container (Option 3 in Bottom Dock) -->
+    <div id="panorama-view-container" class="panorama-page-wrapper hidden">
+      <!-- Floating iOS Dynamic Island Capsule -->
+      <div id="dynamic-island" class="dynamic-island-capsule">
+        <!-- Compact Pill View -->
+        <div class="island-compact">
+          <div class="island-left">
+            <span class="island-dot"></span>
+            <i data-lucide="box" class="island-icon" id="island-compact-icon"></i>
+          </div>
+          <span class="island-title" id="panorama-location-label">Main Entrance</span>
+          <div class="island-right">
+            <i data-lucide="chevron-down" class="island-chevron"></i>
+          </div>
+        </div>
+
+        <!-- Expanded View (Revealed on click) -->
+        <div class="island-expanded">
+          <div class="island-expanded-header">
+            <div class="island-expanded-title-group">
+              <span class="island-badge" id="island-mode-badge">3D VIEW</span>
+              <h3 class="island-expanded-name" id="island-location-name">Main Entrance</h3>
+              <span class="island-expanded-sub" id="island-location-sub">GROUND FLOOR</span>
+            </div>
+            <button id="btn-collapse-island" class="island-icon-btn" title="Collapse"><i
+                data-lucide="chevron-up"></i></button>
+          </div>
+
+          <!-- Normal Search Box (Hidden during active navigation) -->
+          <div class="island-search-box" id="island-normal-search-box">
+            <i data-lucide="search" class="island-search-icon"></i>
+            <input type="text" id="island-search-input" class="island-search-input"
+              placeholder="Search wards, labs, pharmacy..." autocomplete="off">
+            <button id="btn-island-mic" class="island-mic-btn" title="Voice Search" aria-label="Voice Search">
+              <i data-lucide="mic"></i>
+            </button>
+          </div>
+
+          <!-- Active Navigation Controls Panel (Shown during active navigation) -->
+          <div class="island-nav-controls-panel hidden" id="island-nav-controls-panel">
+            <div class="island-nav-info">
+              <div class="island-nav-arrow-badge" id="island-nav-arrow-icon">
+                <i data-lucide="arrow-up-right"></i>
+              </div>
+              <div class="island-nav-text-block">
+                <p class="island-nav-instruction" id="island-nav-instruction">Head straight toward Main Corridor</p>
+                <span class="island-nav-metrics" id="island-nav-metrics">Step 1 of 4 • ~15m remaining</span>
+              </div>
+            </div>
+
+            <div class="island-nav-buttons-row">
+              <button id="btn-island-speech" class="island-control-btn" title="Toggle Audio Guide">
+                <i data-lucide="volume-2"></i> Sound
+              </button>
+              <button id="btn-island-exit-nav" class="island-control-btn exit-accent" title="Exit Navigation">
+                <i data-lucide="square"></i> Exit Nav
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inline search results dropdown (anchored under Dynamic Island, stays in 3D view) -->
+      <div id="island-search-dropdown" class="island-search-dropdown hidden"></div>
+
+      <!-- Floating Gyro Mode Toggle Button (Top Right in 3D View) -->
+      <button id="btn-floating-gyro" class="panorama-floating-gyro" title="Toggle 3D Motion Mode"
+        aria-label="Toggle Gyro">
+        <i data-lucide="compass"></i>
+        <span id="gyro-status-label" class="gyro-pill-label">GYRO OFF</span>
+      </button>
+
+      <!-- Pannellum viewer dual-buffer canvas elements -->
+      <div id="panorama-container" class="panorama-wrapper">
+        <div id="panorama-viewer-a" class="panorama-canvas active"></div>
+        <div id="panorama-viewer-b" class="panorama-canvas"></div>
+        <!-- Motion blur overlay: backdrop-filter blurs canvases during scene transitions -->
+        <div id="motion-blur-overlay"></div>
+      </div>
+    </div>
+
+    <!-- Live 2D Google Maps Container View (2D Map Page - Option 4) -->
+    <div id="map-view-container" class="live-2d-map-wrapper hidden">
+      <div id="google-2d-map"></div>
+    </div>
+
+    <!-- Compact Minimal Bottom Location Card (Visible on 2D Map Page) -->
+    <div id="tactical-bottom-sheet" class="tactical-sheet-container minimal hidden">
+      <div class="tactical-sheet-header">
+        <div class="node-title-group">
+          <h2 class="node-main-title" id="sheet-node-title">Pathology Lab</h2>
+          <span class="node-sub-meta" id="sheet-node-sub">FLOOR 01</span>
+        </div>
+
+        <!-- Floor Selector Stack integrated inside place container -->
+        <div class="hud-floor-stack">
+          <button class="floor-badge" data-floor="2F">02</button>
+          <button class="floor-badge active" data-floor="1F">01</button>
+          <button class="floor-badge" data-floor="GF">00</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Navigation Turn-by-Turn Guidance Banner -->
+    <div id="nav-banner" class="nav-banner hidden">
+      <div class="nav-banner-content">
+        <div class="direction-icon" id="nav-step-icon">
+          <i data-lucide="arrow-up-right"></i>
+        </div>
+        <div class="nav-step-details">
+          <span class="nav-instruction" id="nav-instruction-text">Head straight toward the Main Corridor</span>
+          <span class="nav-metrics" id="nav-metrics-text">Step 1 of 4 • ~12m remaining</span>
+        </div>
+      </div>
+      <div class="nav-banner-actions">
+        <button id="btn-speech-toggle" class="icon-btn small" title="Read Aloud" aria-label="Audio Guide">
+          <i data-lucide="volume-2"></i>
+        </button>
+        <button id="btn-cancel-nav" class="btn-cancel-nav" title="End Navigation" aria-label="Cancel Navigation">
+          <i data-lucide="square"></i> Exit
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating 5 Touching Squircles Bottom Navigation -->
+    <nav class="tactical-dock-nav">
+      <button id="tab-btn-home" class="tactical-dock-tab active" data-tab="home" title="Home" aria-label="Home">
+        <i data-lucide="home"></i>
+      </button>
+      <button id="tab-btn-search" class="tactical-dock-tab" data-tab="search" title="Search" aria-label="Search">
+        <i data-lucide="search"></i>
+      </button>
+      <button id="tab-btn-guide" class="tactical-dock-tab" data-tab="guide" title="3D View"
+        aria-label="3D Panorama View">
+        <i data-lucide="box"></i>
+      </button>
+      <button id="tab-btn-map" class="tactical-dock-tab" data-tab="map" title="2D Map" aria-label="2D Map">
+        <i data-lucide="map"></i>
+      </button>
+      <button id="tab-btn-profile" class="tactical-dock-tab" data-tab="profile" title="Profile" aria-label="Profile">
+        <i data-lucide="user"></i>
+      </button>
+    </nav>
+
+    <!-- Search / AI Results Overlay Modal -->
+    <div id="search-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i data-lucide="compass"></i> Hospital Destinations</h3>
+          <button id="btn-close-search" class="icon-btn"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <div id="ai-reasoning-box" class="ai-reasoning-box hidden">
+            <i data-lucide="sparkles" class="ai-sparkle"></i>
+            <div class="ai-reasoning-content">
+              <strong>AI Assistant Thinking:</strong>
+              <p id="ai-reasoning-text">Searching database...</p>
+            </div>
+          </div>
+          <div id="search-results-list" class="search-results-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i data-lucide="settings"></i> App & AI Settings</h3>
+          <button id="btn-close-settings" class="icon-btn"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="settings-form">
+            <div class="form-group">
+              <label for="groq-api-key">
+                <i data-lucide="key"></i> Groq API Key (Optional)
+              </label>
+              <input type="password" id="groq-api-key" placeholder="gsk_..." autocomplete="off">
+              <small class="form-hint">Used for ultra-fast Llama 3 natural language queries. If empty, local NLP intent
+                engine is used automatically.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="groq-model-select">
+                <i data-lucide="cpu"></i> Groq Model
+              </label>
+              <select id="groq-model-select">
+                <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Recommended)</option>
+                <option value="llama3-8b-8192">Llama 3 8B (Fast)</option>
+                <option value="mixtral-8x7b-32768">Mixtral 8x7b</option>
+              </select>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="setting-auto-speech" checked>
+                <span>Spoken Turn-by-Turn Audio Guidance</span>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Settings</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voice Search Listening Overlay -->
+    <div id="voice-overlay" class="voice-overlay hidden">
+      <div class="voice-pulse-circle">
+        <i data-lucide="mic"></i>
+      </div>
+      <p class="voice-status" id="voice-status-text">Listening for destination...</p>
+      <span class="voice-hint">Say something like: "Take me to the Pharmacy"</span>
+      <button id="btn-cancel-voice" class="btn-secondary margin-top"><i data-lucide="x"></i> Cancel</button>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ADMIN STUDIO — Unified 3D Hotspot & Tour Builder
+       Access via: URL hash #admin (e.g. http://localhost:3000/#admin)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="admin-panel" class="admin-panel hidden">
+
+    <!-- Password Gate -->
+    <div id="admin-gate" class="admin-gate">
+      <form class="admin-gate-card" id="admin-login-form" onsubmit="return false;">
+        <img src="/medipath-logo.png" alt="MediPath logo" class="admin-gate-logo">
+        <h2 class="admin-gate-title">Admin Studio</h2>
+        <p class="admin-gate-subtitle">MediPath · Medicover Sangamner</p>
+        <div class="admin-gate-input-wrap">
+          <i data-lucide="lock"></i>
+          <input type="password" id="admin-password-input" class="admin-gate-input"
+            placeholder="Enter admin password..." autocomplete="current-password">
+        </div>
+        <button type="submit" id="btn-admin-login" class="admin-gate-btn">
+          <i data-lucide="log-in"></i> Unlock Studio
+        </button>
+        <button type="button" id="btn-admin-close-gate" class="admin-gate-cancel">Cancel</button>
+      </form>
+    </div>
+
+    <!-- Main Admin Workspace -->
+    <div id="admin-workspace" class="admin-workspace hidden">
+
+      <!-- Streamlined Top Bar -->
+      <div class="admin-topbar">
+        <div class="admin-topbar-left">
+          <span class="admin-logo"><i data-lucide="compass"></i> MediPath Studio</span>
+          <span id="admin-fb-badge" class="admin-fb-badge offline">● Offline</span>
+          <div class="admin-current-spot-pill" id="admin-current-spot-badge">
+            <i data-lucide="map-pin"></i>
+            <span id="admin-current-spot-name">Main Entrance</span>
+          </div>
+        </div>
+
+        <div class="admin-topbar-right">
+          <!-- Quick Place Switcher -->
+          <div class="admin-switcher-wrap">
+            <i data-lucide="map"></i>
+            <select id="admin-place-select" class="admin-select" title="Switch to another 3D panorama location">
+              <!-- Populated by JS -->
+            </select>
+          </div>
+
+          <!-- Change Current Photo -->
+          <button id="btn-admin-change-photo" class="admin-btn admin-btn-ghost" title="Replace 360° photo for current spot">
+            <i data-lucide="image"></i> Change Photo
+          </button>
+
+          <!-- Sync RTDB -->
+          <button id="btn-admin-sync-all" class="admin-btn admin-btn-ghost" title="Sync all data to Firebase Realtime Database">
+            <i data-lucide="refresh-cw"></i> Sync Cloud
+          </button>
+
+          <!-- Reset to Clean Slate -->
+          <button id="btn-admin-reset-all" class="admin-btn admin-btn-ghost" title="Reset all places and start fresh with Entrance only">
+            <i data-lucide="rotate-ccw"></i> Reset All
+          </button>
+
+          <!-- Exit -->
+          <button id="btn-admin-exit" class="admin-btn admin-btn-danger" title="Exit Admin Studio">
+            <i data-lucide="log-out"></i> Exit
+          </button>
+        </div>
+      </div>
+
+      <!-- Full 3D Panorama Viewport -->
+      <div class="admin-viewer-area" id="admin-viewer-dropzone">
+
+        <!-- Click-to-Place Overlay (active in editor mode — blocks Pannellum panning) -->
+        <div id="admin-click-overlay" class="admin-click-overlay hidden">
+          <!-- Editor mode indicator pill -->
+          <div class="admin-editor-mode-pill">
+            <i data-lucide="crosshair"></i>
+            <span>Click anywhere to place arrow</span>
+            <button id="btn-admin-cancel-place" class="admin-editor-cancel-btn" title="Cancel">
+              <i data-lucide="x"></i> Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Hotspot Button (bottom-left of 3D view) -->
+        <button id="btn-admin-add-hotspot" class="admin-add-hotspot-btn" title="Click to enter placement mode, then click anywhere in the 3D view to place an arrow">
+          <i data-lucide="plus"></i>
+          <span>Add Hotspot</span>
+        </button>
+
+        <!-- Top Right Corner: Hotspot Arrows Management Container -->
+        <div id="admin-hotspot-panel" class="admin-hotspot-panel">
+          <div class="admin-hs-panel-header">
+            <div class="admin-hs-panel-title">
+              <i data-lucide="navigation-2"></i>
+              <span>Arrows on this View</span>
+            </div>
+            <span id="admin-hs-count-badge" class="admin-hs-badge">0</span>
+          </div>
+          <div id="admin-hs-items-list" class="admin-hs-items-list">
+            <!-- Populated dynamically with delete buttons -->
+          </div>
+        </div>
+
+        <!-- Pending Click Marker -->
+        <div id="admin-pending-marker" class="admin-pending-marker hidden">
+          <i data-lucide="map-pin"></i>
+        </div>
+
+        <!-- Admin 3D Panorama & Node Loading Screen -->
+        <div id="admin-loading-screen" class="admin-loading-screen">
+          <div class="admin-spinner-card">
+            <div class="admin-spinner-ring">
+              <div class="admin-spinner-core">
+                <i data-lucide="compass"></i>
+              </div>
+            </div>
+            <div class="admin-loading-text">Loading 3D Campus Tour...</div>
+            <div class="admin-loading-sub" id="admin-loading-sub">Syncing node data & WebGL canvas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Create Hotspot Arrow & Destination Place -->
+      <div id="admin-create-hotspot-modal" class="admin-modal-overlay hidden">
+        <div class="admin-modal-card">
+          <div class="admin-modal-header">
+            <div class="header-badge"><i data-lucide="navigation"></i> ADD ARROW</div>
+            <button id="btn-close-hotspot-modal" class="admin-form-close"><i data-lucide="x"></i></button>
+          </div>
+
+          <div class="admin-modal-body">
+
+            <!-- Mode Toggle -->
+            <div class="hs-mode-toggle">
+              <button id="hs-mode-new" class="hs-mode-btn hs-mode-active" type="button">
+                <i data-lucide="plus-circle"></i> New Place
+              </button>
+              <button id="hs-mode-existing" class="hs-mode-btn" type="button">
+                <i data-lucide="link"></i> Existing Place
+              </button>
+            </div>
+
+            <!-- ── NEW PLACE SECTION ── -->
+            <div id="hs-section-new">
+              <div class="admin-form-row">
+                <label>Where does this arrow lead? (Place Name) *</label>
+                <input type="text" id="hs-new-name" class="admin-input" placeholder="e.g. AI & Robotics Lab, Library, Room 102">
+              </div>
+
+              <div class="admin-form-row-grid">
+                <div class="admin-form-row">
+                  <label>Floor</label>
+                  <select id="hs-new-floor" class="admin-input">
+                    <option value="GF">Ground Floor (GF)</option>
+                    <option value="1F">First Floor (1F)</option>
+                    <option value="2F">Second Floor (2F)</option>
+                    <option value="3F">Third Floor (3F)</option>
+                  </select>
+                </div>
+                <div class="admin-form-row" style="grid-column: span 2;">
+                  <label>Arrow Text Label</label>
+                  <input type="text" id="hs-new-label" class="admin-input" placeholder="e.g. Walk to AI Lab">
+                </div>
+              </div>
+
+              <!-- Upload Panorama Image for this New Spot -->
+              <div class="admin-form-section-title"><i data-lucide="image"></i> 360° Panorama Photo for Destination *</div>
+
+              <div class="cn-image-upload-area">
+                <div id="hs-new-image-drop" class="cn-image-drop" title="Click or drop 360° photo">
+                  <input type="file" id="hs-new-image-file" accept="image/*" style="display:none">
+                  <div class="cn-drop-inner">
+                    <i data-lucide="image-up"></i>
+                    <span class="cn-drop-title">Upload 360° Panorama Photo</span>
+                    <span class="cn-drop-sub">Drag & drop or click to browse (JPG, PNG, WEBP)</span>
+                  </div>
+                </div>
+
+                <!-- Image Preview -->
+                <div id="hs-new-image-preview" class="cn-image-preview hidden">
+                  <img id="hs-new-preview-img" src="" alt="Panorama preview">
+                  <button type="button" id="btn-hs-new-clear-img" class="cn-clear-btn" title="Remove photo"><i data-lucide="x"></i></button>
+                </div>
+
+                <!-- Or URL Input -->
+                <div class="admin-form-row" style="margin-top:6px;">
+                  <label>Or Image URL</label>
+                  <input type="text" id="hs-new-image-url" class="admin-input admin-input-mono" placeholder="https://example.com/panorama.jpg">
+                </div>
+              </div>
+
+              <!-- 2-Way Navigation checkbox -->
+              <label class="admin-checkbox-label" style="margin-top:8px;">
+                <input type="checkbox" id="hs-new-return-arrow" checked>
+                <span>Also add a return arrow back to current spot</span>
+              </label>
+            </div>
+
+            <!-- ── EXISTING PLACE SECTION ── -->
+            <div id="hs-section-existing" class="hidden">
+              <div class="admin-form-row">
+                <label>Select Existing Place *</label>
+                <select id="hs-existing-node-select" class="admin-input">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div class="admin-form-row">
+                <label>Arrow Text Label</label>
+                <input type="text" id="hs-existing-label" class="admin-input" placeholder="e.g. Return to Entrance">
+              </div>
+              <p class="hs-existing-hint">
+                <i data-lucide="info"></i>
+                This will add a clickable arrow here pointing to the selected existing place. No new place is created.
+              </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="admin-modal-actions">
+              <button id="btn-save-new-hotspot" class="admin-btn admin-btn-primary admin-btn-full">
+                <i data-lucide="save"></i> Save & Add Arrow
+              </button>
+              <button id="btn-cancel-new-hotspot" class="admin-btn admin-btn-ghost admin-btn-full">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Change Current Panorama Photo -->
+      <div id="admin-change-photo-modal" class="admin-modal-overlay hidden">
+        <div class="admin-modal-card">
+          <div class="admin-modal-header">
+            <div class="header-badge"><i data-lucide="image"></i> UPDATE 360° PHOTO</div>
+            <button id="btn-close-change-photo" class="admin-form-close"><i data-lucide="x"></i></button>
+          </div>
+          <div class="admin-modal-body">
+            <p class="admin-modal-desc">Upload a new 360° panorama photo for <strong id="admin-change-photo-place-name">this spot</strong>:</p>
+            
+            <div class="cn-image-upload-area">
+              <div id="cp-image-drop" class="cn-image-drop">
+                <input type="file" id="cp-image-file" accept="image/*" style="display:none">
+                <div class="cn-drop-inner">
+                  <i data-lucide="image-up"></i>
+                  <span class="cn-drop-title">Drop new 360° photo here</span>
+                  <span class="cn-drop-sub">Click to browse file</span>
+                </div>
+              </div>
+
+              <div id="cp-image-preview" class="cn-image-preview hidden">
+                <img id="cp-preview-img" src="" alt="Panorama preview">
+                <button type="button" id="btn-cp-clear-img" class="cn-clear-btn"><i data-lucide="x"></i></button>
+              </div>
+
+              <div class="admin-form-row" style="margin-top:6px;">
+                <label>Or paste Image URL</label>
+                <input type="text" id="cp-image-url" class="admin-input admin-input-mono" placeholder="https://example.com/panorama.jpg">
+              </div>
+            </div>
+
+            <div class="admin-modal-actions">
+              <button id="btn-save-change-photo" class="admin-btn admin-btn-primary admin-btn-full">
+                <i data-lucide="save"></i> Update Photo
+              </button>
+              <button id="btn-cancel-change-photo" class="admin-btn admin-btn-ghost admin-btn-full">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast Feedback -->
+      <div id="admin-save-toast" class="admin-save-toast hidden">✅ Saved to Firebase!</div>
+
+    </div>
+  </div>
+  <!-- end #admin-panel -->
+
+  <script type="module" src="/src/js/app.js"></script>
+</body>
+
+</html>
