@@ -1,0 +1,23 @@
+{
+  "name": "MediPath",
+  "short_name": "MediPath",
+  "description": "3D indoor navigation & live map for Medicover Hospital, Sangamner",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#ff6b00",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
